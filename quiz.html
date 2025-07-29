@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Quiz Maker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .option-item:hover .delete-option {
+            opacity: 1;
+        }
+        .question-card:hover .delete-question {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-pink-600 mb-2">Mini Quiz Maker</h1>
+            <p class="text-gray-600">Kendi quizlerinizi kolayca oluşturun ve paylaşın</p>
+        </header>
+
+        <!-- Main Content -->
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Quiz Creator Panel -->
+            <div class="w-full lg:w-1/2 bg-white rounded-xl shadow-md p-6 fade-in">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">Quiz Oluştur</h2>
+                
+                <!-- Quiz Title -->
+                <div class="mb-6">
+                    <label for="quiz-title" class="block text-sm font-medium text-gray-700 mb-1">Quiz Başlığı</label>
+                    <input type="text" id="quiz-title" placeholder="Quiz başlığını girin" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                </div>
+                
+                <!-- Quiz Description -->
+                <div class="mb-6">
+                    <label for="quiz-desc" class="block text-sm font-medium text-gray-700 mb-1">Quiz Açıklaması (Opsiyonel)</label>
+                    <textarea id="quiz-desc" rows="2" placeholder="Quiz hakkında kısa bir açıklama" 
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"></textarea>
+                </div>
+                
+                <!-- Questions Section -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-800">Sorular</h3>
+                        <button id="add-question" class="px-3 py-1 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition flex items-center gap-1">
+                            <i class="fas fa-plus"></i> Yeni Soru
+                        </button>
+                    </div>
+                    
+                    <!-- Questions Container -->
+                    <div id="questions-container" class="space-y-4">
+                        <!-- Questions will be added here dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex gap-3">
+                    <button id="preview-quiz" class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-eye"></i> Önizleme
+                    </button>
+                    <button id="save-quiz" class="flex-1 px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-save"></i> Kaydet
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Quiz Preview Panel -->
+            <div class="w-full lg:w-1/2 bg-white rounded-xl shadow-md p-6 fade-in">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">Quiz Önizleme</h2>
+                
+                <div id="preview-content" class="text-center py-10">
+                    <div class="text-gray-400 mb-4">
+                        <i class="fas fa-poll-h text-5xl"></i>
+                    </div>
+                    <h3 class="text-xl font-medium text-gray-600">Quiz önizlemesi burada görünecek</h3>
+                    <p class="text-gray-500 mt-2">Quiz oluşturmaya başladığınızda burada canlı önizleme göreceksiniz</p>
+                </div>
+                
+                <!-- Quiz Start Panel (hidden by default) -->
+                <div id="quiz-start-panel" class="hidden">
+                    <div id="quiz-info" class="text-center mb-8">
+                        <h3 id="preview-quiz-title" class="text-2xl font-bold text-pink-600 mb-2"></h3>
+                        <p id="preview-quiz-desc" class="text-gray-600 mb-6"></p>
+                        <button id="start-quiz" class="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition font-medium">
+                            Quiz'i Başlat <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Quiz Questions (hidden by default) -->
+                    <div id="quiz-questions" class="hidden">
+                        <!-- Quiz questions will be shown here -->
+                    </div>
+                    
+                    <!-- Quiz Results (hidden by default) -->
+                    <div id="quiz-results" class="hidden text-center py-8">
+                        <div class="text-pink-500 mb-4">
+                            <i class="fas fa-trophy text-5xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">Quiz Tamamlandı!</h3>
+                        <p id="result-score" class="text-xl font-medium mb-6">Puan: <span class="text-pink-600">0</span></p>
+                        <button id="restart-quiz" class="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition">
+                            <i class="fas fa-redo mr-2"></i> Tekrar Dene
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const quizTitleInput = document.getElementById('quiz-title');
+            const quizDescInput = document.getElementById('quiz-desc');
+            const addQuestionBtn = document.getElementById('add-question');
+            const questionsContainer = document.getElementById('questions-container');
+            const previewQuizBtn = document.getElementById('preview-quiz');
+            const saveQuizBtn = document.getElementById('save-quiz');
+            const previewContent = document.getElementById('preview-content');
+            const quizStartPanel = document.getElementById('quiz-start-panel');
+            const previewQuizTitle = document.getElementById('preview-quiz-title');
+            const previewQuizDesc = document.getElementById('preview-quiz-desc');
+            const startQuizBtn = document.getElementById('start-quiz');
+            const quizQuestions = document.getElementById('quiz-questions');
+            const quizResults = document.getElementById('quiz-results');
+            const resultScore = document.getElementById('result-score');
+            const restartQuizBtn = document.getElementById('restart-quiz');
+            
+            // Quiz Data
+            let quizData = {
+                title: '',
+                description: '',
+                questions: []
+            };
+            
+            let currentQuestionIndex = 0;
+            let score = 0;
+            
+            // Add new question
+            addQuestionBtn.addEventListener('click', function() {
+                addNewQuestion();
+            });
+            
+            // Preview quiz
+            previewQuizBtn.addEventListener('click', function() {
+                updateQuizData();
+                if (quizData.questions.length === 0) {
+                    alert('Lütfen en az bir soru ekleyin!');
+                    return;
+                }
+                
+                previewContent.classList.add('hidden');
+                quizStartPanel.classList.remove('hidden');
+                quizQuestions.classList.add('hidden');
+                quizResults.classList.add('hidden');
+                
+                previewQuizTitle.textContent = quizData.title || 'Adsız Quiz';
+                previewQuizDesc.textContent = quizData.description || 'Açıklama yok';
+            });
+            
+            // Save quiz (for demo, just shows an alert)
+            saveQuizBtn.addEventListener('click', function() {
+                updateQuizData();
+                if (quizData.title.trim() === '') {
+                    alert('Lütfen bir quiz başlığı girin!');
+                    return;
+                }
+                if (quizData.questions.length === 0) {
+                    alert('Lütfen en az bir soru ekleyin!');
+                    return;
+                }
+                
+                alert('Quiz başarıyla kaydedildi!\n\nBaşlık: ' + quizData.title + '\nSoru Sayısı: ' + quizData.questions.length);
+            });
+            
+            // Start quiz
+            startQuizBtn.addEventListener('click', function() {
+                quizStartPanel.querySelector('#quiz-info').classList.add('hidden');
+                quizQuestions.classList.remove('hidden');
+                loadQuestion(0);
+            });
+            
+            // Restart quiz
+            restartQuizBtn.addEventListener('click', function() {
+                currentQuestionIndex = 0;
+                score = 0;
+                quizResults.classList.add('hidden');
+                quizStartPanel.querySelector('#quiz-info').classList.remove('hidden');
+            });
+            
+            // Function to add new question
+            function addNewQuestion() {
+                const questionId = Date.now();
+                const questionHtml = `
+                    <div class="question-card bg-gray-50 p-4 rounded-lg border border-gray-200 relative" data-id="${questionId}">
+                        <button class="delete-question absolute top-2 right-2 text-red-500 opacity-0 transition-opacity" data-id="${questionId}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Soru ${questionsContainer.children.length + 1}</label>
+                            <input type="text" placeholder="Soru metnini girin" 
+                                   class="question-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                        </div>
+                        <div class="options-container mb-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Seçenekler</label>
+                            <div class="space-y-2">
+                                <div class="option-item flex items-center gap-2">
+                                    <input type="radio" name="correct-${questionId}" value="0" class="correct-option">
+                                    <input type="text" placeholder="Seçenek 1" class="option-input flex-1 px-3 py-1 border border-gray-300 rounded-lg">
+                                    <button class="delete-option text-red-500 opacity-0 transition-opacity">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="option-item flex items-center gap-2">
+                                    <input type="radio" name="correct-${questionId}" value="1" class="correct-option">
+                                    <input type="text" placeholder="Seçenek 2" class="option-input flex-1 px-3 py-1 border border-gray-300 rounded-lg">
+                                    <button class="delete-option text-red-500 opacity-0 transition-opacity">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <button class="add-option px-2 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">
+                                <i class="fas fa-plus mr-1"></i> Seçenek Ekle
+                            </button>
+                            <span class="text-xs text-gray-500">Doğru cevabı seçin</span>
+                        </div>
+                    </div>
+                `;
+                
+                const questionElement = document.createElement('div');
+                questionElement.innerHTML = questionHtml;
+                questionsContainer.appendChild(questionElement);
+                
+                // Add event listeners for the new question
+                const questionCard = questionElement.querySelector('.question-card');
+                const addOptionBtn = questionCard.querySelector('.add-option');
+                const deleteQuestionBtn = questionCard.querySelector('.delete-question');
+                const optionItems = questionCard.querySelectorAll('.option-item');
+                
+                addOptionBtn.addEventListener('click', function() {
+                    addOptionToQuestion(questionCard);
+                });
+                
+                deleteQuestionBtn.addEventListener('click', function() {
+                    if (confirm('Bu soruyu silmek istediğinize emin misiniz?')) {
+                        questionCard.remove();
+                        renumberQuestions();
+                    }
+                });
+                
+                optionItems.forEach(item => {
+                    const deleteOptionBtn = item.querySelector('.delete-option');
+                    deleteOptionBtn.addEventListener('click', function() {
+                        if (item.parentElement.children.length > 2) {
+                            item.remove();
+                        } else {
+                            alert('En az iki seçenek olmalıdır!');
+                        }
+                    });
+                });
+            }
+            
+            // Function to add option to a question
+            function addOptionToQuestion(questionCard) {
+                const optionsContainer = questionCard.querySelector('.options-container .space-y-2');
+                const optionCount = optionsContainer.children.length;
+                
+                if (optionCount >= 6) {
+                    alert('En fazla 6 seçenek ekleyebilirsiniz!');
+                    return;
+                }
+                
+                const optionId = Date.now();
+                const optionHtml = `
+                    <div class="option-item flex items-center gap-2">
+                        <input type="radio" name="${questionCard.querySelector('.correct-option').name}" value="${optionCount}" class="correct-option">
+                        <input type="text" placeholder="Seçenek ${optionCount + 1}" class="option-input flex-1 px-3 py-1 border border-gray-300 rounded-lg">
+                        <button class="delete-option text-red-500 opacity-0 transition-opacity">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                
+                const optionElement = document.createElement('div');
+                optionElement.innerHTML = optionHtml;
+                optionsContainer.appendChild(optionElement);
+                
+                // Add event listener for delete option button
+                const deleteOptionBtn = optionElement.querySelector('.delete-option');
+                deleteOptionBtn.addEventListener('click', function() {
+                    if (optionsContainer.children.length > 2) {
+                        optionElement.remove();
+                    } else {
+                        alert('En az iki seçenek olmalıdır!');
+                    }
+                });
+            }
+            
+            // Function to renumber questions after deletion
+            function renumberQuestions() {
+                const questionCards = questionsContainer.querySelectorAll('.question-card');
+                questionCards.forEach((card, index) => {
+                    card.querySelector('label').textContent = `Soru ${index + 1}`;
+                });
+            }
+            
+            // Function to update quiz data
+            function updateQuizData() {
+                quizData.title = quizTitleInput.value.trim();
+                quizData.description = quizDescInput.value.trim();
+                quizData.questions = [];
+                
+                const questionCards = questionsContainer.querySelectorAll('.question-card');
+                questionCards.forEach(card => {
+                    const questionText = card.querySelector('.question-input').value.trim();
+                    const options = [];
+                    let correctAnswer = -1;
+                    
+                    const optionInputs = card.querySelectorAll('.option-input');
+                    const correctOptions = card.querySelectorAll('.correct-option');
+                    
+                    correctOptions.forEach((option, index) => {
+                        if (option.checked) {
+                            correctAnswer = index;
+                        }
+                    });
+                    
+                    optionInputs.forEach(input => {
+                        if (input.value.trim() !== '') {
+                            options.push(input.value.trim());
+                        }
+                    });
+                    
+                    if (questionText !== '' && options.length >= 2 && correctAnswer !== -1) {
+                        quizData.questions.push({
+                            question: questionText,
+                            options: options,
+                            correctAnswer: correctAnswer
+                        });
+                    }
+                });
+            }
+            
+            // Function to load question in quiz
+            function loadQuestion(index) {
+                if (index >= quizData.questions.length) {
+                    // Quiz completed
+                    showResults();
+                    return;
+                }
+                
+                currentQuestionIndex = index;
+                const question = quizData.questions[index];
+                
+                quizQuestions.innerHTML = `
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-sm font-medium text-gray-500">Soru ${index + 1}/${quizData.questions.length}</span>
+                            <span class="text-sm font-medium text-indigo-600">Puan: ${score}</span>
+                        </div>
+                        <h3 class="text-xl font-medium text-gray-800 mb-6">${question.question}</h3>
+                        <div class="space-y-3">
+                            ${question.options.map((option, i) => `
+                                <button class="option-btn w-full text-left px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition" data-index="${i}">
+                                    ${option}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listeners to options
+                const optionButtons = quizQuestions.querySelectorAll('.option-btn');
+                optionButtons.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const selectedIndex = parseInt(this.getAttribute('data-index'));
+                        checkAnswer(selectedIndex, question.correctAnswer);
+                    });
+                });
+            }
+            
+            // Function to check answer
+            function checkAnswer(selectedIndex, correctIndex) {
+                const optionButtons = quizQuestions.querySelectorAll('.option-btn');
+                
+                if (selectedIndex === correctIndex) {
+                    optionButtons[selectedIndex].classList.add('bg-pink-100', 'border-pink-400');
+                    score += 10;
+                } else {
+                    optionButtons[selectedIndex].classList.add('bg-red-100', 'border-red-400');
+                    optionButtons[correctIndex].classList.add('bg-pink-100', 'border-pink-400');
+                }
+                
+                // Disable all buttons after selection
+                optionButtons.forEach(btn => {
+                    btn.disabled = true;
+                });
+                
+                // Move to next question after delay
+                setTimeout(() => {
+                    loadQuestion(currentQuestionIndex + 1);
+                }, 1500);
+            }
+            
+            // Function to show results
+            function showResults() {
+                quizQuestions.classList.add('hidden');
+                quizResults.classList.remove('hidden');
+                
+                const percentage = Math.round((score / (quizData.questions.length * 10)) * 100);
+                resultScore.innerHTML = `Puan: <span class="text-indigo-600">${score} (${percentage}%)</span>`;
+            }
+            
+            // Initialize with one question
+            addNewQuestion();
+        });
+    </script>
+</body>
+</html>
